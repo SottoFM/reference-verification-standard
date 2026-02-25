@@ -1,0 +1,60 @@
+{
+  "name": "@sottofm/verification-standard",
+  "version": "0.1.0",
+  "description": "Open, domain-aware reference verification standard for academic, news, government, and general sources",
+  "keywords": [
+    "reference-verification",
+    "citation",
+    "fact-checking",
+    "academic",
+    "news",
+    "domain-aware",
+    "scoring",
+    "podcast",
+    "open-standard"
+  ],
+  "homepage": "https://github.com/SottoFM/reference-verification-standard#readme",
+  "bugs": {
+    "url": "https://github.com/SottoFM/reference-verification-standard/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/SottoFM/reference-verification-standard.git"
+  },
+  "license": "MIT",
+  "author": "SottoFM <hello@sotto.fm>",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "publishConfig": {
+    "main": "./dist/index.js",
+    "module": "./dist/index.mjs",
+    "types": "./dist/index.d.ts",
+    "exports": {
+      ".": {
+        "import": "./dist/index.mjs",
+        "require": "./dist/index.js",
+        "types": "./dist/index.d.ts"
+      }
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md"
+  ],
+  "scripts": {
+    "build": "tsup src/index.ts --format cjs,esm --dts --clean",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "prepublishOnly": "npm run typecheck && npm test && npm run build"
+  },
+  "devDependencies": {
+    "@vitest/coverage-v8": "^2.0.0",
+    "tsup": "^8.0.0",
+    "typescript": "^5.4.0",
+    "vitest": "^2.0.0"
+  }
+}
