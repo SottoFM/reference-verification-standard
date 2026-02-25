@@ -7,7 +7,7 @@ on:
 
 jobs:
   release:
-    name: Publish to npm
+    name: Build, publish & release
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -36,7 +36,16 @@ jobs:
         run: npm run build
 
       - name: Publish to npm
-        run: npm publish --access public --provenance
+        # Requires NPM_TOKEN secret — add via:
+        # GitHub repo Settings → Secrets → Actions → New repository secret
+        # Name: NPM_TOKEN  Value: npm token with publish access to @sottofm scope
+        run: |
+          if [ -z "$NODE_AUTH_TOKEN" ]; then
+            echo "⚠️  NPM_TOKEN secret not configured — skipping npm publish."
+            echo "    To enable: add NPM_TOKEN in repo Settings → Secrets → Actions"
+            exit 0
+          fi
+          npm publish --access public --provenance
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
