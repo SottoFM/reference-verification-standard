@@ -36,18 +36,10 @@ jobs:
         run: npm run build
 
       - name: Publish to npm
-        # Requires NPM_TOKEN secret — add via:
-        # GitHub repo Settings → Secrets → Actions → New repository secret
-        # Name: NPM_TOKEN  Value: npm token with publish access to @sottofm scope
-        run: |
-          if [ -z "$NODE_AUTH_TOKEN" ]; then
-            echo "⚠️  NPM_TOKEN secret not configured — skipping npm publish."
-            echo "    To enable: add NPM_TOKEN in repo Settings → Secrets → Actions"
-            exit 0
-          fi
-          npm publish --access public --provenance
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        # Uses npm Trusted Publishing (OIDC) — no NPM_TOKEN secret required.
+        # Configure at: npmjs.com → package settings → Trusted Publishers
+        # Add GitHub publisher: owner=SottoFM repo=reference-verification-standard workflow=release.yml
+        run: npm publish --access public --provenance
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
