@@ -1,6 +1,6 @@
 export type ContentDomain = 'ACADEMIC' | 'NEWS' | 'GOVERNMENT' | 'GENERAL';
 
-// Must match the layer IDs used in reference-validator.ts: 'doi', 'title_search', 'url', 'ai'
+// Must match the layer IDs used in the verification pipeline
 export type LayerId = 'doi' | 'title_search' | 'url' | 'ai';
 
 export interface LayerResult {
@@ -9,21 +9,62 @@ export interface LayerResult {
   confidence: number; // 0.0–1.0
 }
 
+// ── Weighted-sum layer config (v1 scoring) ────────────────────────────────────
+
 export interface LayerConfig {
   id: LayerId;
-  weight: number; // normalized among applicable layers, sums to 1.0
+  weight: number;      // normalized among applicable layers, sums to 1.0
   description: string;
 }
+
+// ── Bayesian layer config (v2 scoring) ────────────────────────────────────────
+
+/**
+ * Sensitivity and specificity characterise each layer's diagnostic power.
+ *
+ * sensitivity  = P(layer passes | reference is real)
+ * specificity  = P(layer fails  | reference is fake)
+ *
+ * These define two likelihood ratios:
+ *   LR+ = sensitivity / (1 - specificity)   — evidence in favour of real
+ *   LR- = (1 - sensitivity) / specificity   — evidence in favour of fake
+ *
+ * A continuous confidence c ∈ [0,1] contributes:
+ *   Δ log-odds = c × ln(LR+) + (1-c) × ln(LR-)
+ *
+ * c = 1.0 → full positive evidence
+ * c = 0.5 → uninformative (no update)
+ * c = 0.0 → full negative evidence
+ */
+export interface LayerBayesianParams {
+  sensitivity: number; // P(pass | real)  — 0.0–1.0
+  specificity: number; // P(fail | fake)  — 0.0–1.0
+}
+
+export interface BayesianLayerConfig extends LayerConfig {
+  bayesian: LayerBayesianParams;
+}
+
+// ── Domain config ─────────────────────────────────────────────────────────────
 
 export interface DomainConfig {
   domain: ContentDomain;
   label: string;
   description: string;
-  layers: LayerConfig[];
-  threshold: number; // minimum weighted score to VERIFY
-  aiInstruction: string; // injected into AI evaluator prompt
-  urlPatterns?: RegExp[]; // URL patterns that hint at this domain
-  typePatterns?: string[]; // ReferenceType values that hint at this domain
+
+  // v1: weighted-sum scoring
+  layers: BayesianLayerConfig[];
+  threshold: number;       // minimum weighted score to VERIFY (v1)
+
+  // v2: Bayesian scoring
+  /** P(reference is real | it belongs to this domain) — domain prior */
+  prior: number;
+  /** minimum posterior probability to VERIFY (v2) */
+  bayesianThreshold: number;
+
+  aiInstruction: string;
+  urlPatterns?: RegExp[];
+  typePatterns?: string[];
 }
 
 export interface VerificationPrinciple {

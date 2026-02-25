@@ -27,6 +27,42 @@ describe('DOMAIN_CONFIGS', () => {
     }
   });
 
+  describe('Bayesian params are valid', () => {
+    for (const [domain, config] of Object.entries(DOMAIN_CONFIGS)) {
+      it(`${domain} prior is in (0, 1)`, () => {
+        expect(config.prior).toBeGreaterThan(0);
+        expect(config.prior).toBeLessThan(1);
+      });
+
+      it(`${domain} bayesianThreshold is in (0, 1)`, () => {
+        expect(config.bayesianThreshold).toBeGreaterThan(0);
+        expect(config.bayesianThreshold).toBeLessThan(1);
+      });
+
+      for (const layer of config.layers) {
+        it(`${domain}.${layer.id} sensitivity is in (0, 1)`, () => {
+          expect(layer.bayesian.sensitivity).toBeGreaterThan(0);
+          expect(layer.bayesian.sensitivity).toBeLessThan(1);
+        });
+
+        it(`${domain}.${layer.id} specificity is in (0, 1)`, () => {
+          expect(layer.bayesian.specificity).toBeGreaterThan(0);
+          expect(layer.bayesian.specificity).toBeLessThan(1);
+        });
+
+        it(`${domain}.${layer.id} LR+ > 1 (positive evidence is helpful)`, () => {
+          const lrPos = layer.bayesian.sensitivity / (1 - layer.bayesian.specificity);
+          expect(lrPos).toBeGreaterThan(1);
+        });
+
+        it(`${domain}.${layer.id} LR- < 1 (negative evidence is harmful)`, () => {
+          const lrNeg = (1 - layer.bayesian.sensitivity) / layer.bayesian.specificity;
+          expect(lrNeg).toBeLessThan(1);
+        });
+      }
+    }
+  });
+
   describe('NEWS domain — lower threshold to handle paywalls', () => {
     it('NEWS threshold is 0.50 (not 0.65+)', () => {
       expect(DOMAIN_CONFIGS.NEWS.threshold).toBe(0.50);
@@ -59,6 +95,19 @@ describe('DOMAIN_CONFIGS', () => {
       const doiLayer = DOMAIN_CONFIGS.ACADEMIC.layers.find((l) => l.id === 'doi');
       const maxWeight = Math.max(...DOMAIN_CONFIGS.ACADEMIC.layers.map((l) => l.weight));
       expect(doiLayer?.weight).toBe(maxWeight);
+    });
+
+    it('ACADEMIC doi layer has the highest sensitivity (most reliable positive signal)', () => {
+      const doiLayer = DOMAIN_CONFIGS.ACADEMIC.layers.find((l) => l.id === 'doi');
+      const maxSensitivity = Math.max(...DOMAIN_CONFIGS.ACADEMIC.layers.map((l) => l.bayesian.sensitivity));
+      expect(doiLayer?.bayesian.sensitivity).toBe(maxSensitivity);
+    });
+  });
+
+  describe('GENERAL domain — highest scrutiny', () => {
+    it('GENERAL prior is the lowest (most skeptical)', () => {
+      const priors = Object.values(DOMAIN_CONFIGS).map((c) => c.prior);
+      expect(DOMAIN_CONFIGS.GENERAL.prior).toBe(Math.min(...priors));
     });
   });
 
