@@ -24,8 +24,10 @@ function sigmoid(x: number): number {
  *   posterior = sigmoid(prior_log_odds + Σ Δ)
  *   verdict   = posterior >= bayesianThreshold ? 'VERIFIED' : 'FAILED'
  *
- * Layers absent from layerResults are treated as fully uninformative (c = 0.5),
- * which produces Δ = 0 and leaves the running log-odds unchanged.
+ * Layers absent from layerResults are treated as minimally informative (c = 0.5).
+ * Note: Δ = 0 only when LR+ × LR- = 1 (i.e. sensitivity = 1 - specificity, zero
+ * discriminative power). For calibrated layers, c = 0.5 still contributes a small
+ * net shift — absent evidence is not the same as no evidence.
  *
  * @param domain       - The content domain (ACADEMIC | NEWS | GOVERNMENT | GENERAL)
  * @param layerResults - Results from each verification layer
