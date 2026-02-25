@@ -180,9 +180,9 @@ function classifyReference(ref: {
 }): ContentDomain
 ```
 
-### `computeDomainAwareScore(domain, layerResults)`
+### `computeDomainAwareScore(domain, layerResults)` — v1
 
-Compute a weighted verification score for a given domain.
+Compute a weighted-sum score for a given domain.
 
 ```ts
 function computeDomainAwareScore(
@@ -195,6 +195,50 @@ function computeDomainAwareScore(
 
 Layer results for layers not applicable to the domain are ignored.
 
+---
+
+### `computeBayesianScore(domain, layerResults)` — v2
+
+Compute a Bayesian posterior probability using log-odds updating.
+
+```ts
+function computeBayesianScore(
+  domain: ContentDomain,
+  layerResults: LayerResult[]
+): {
+  posterior: number;              // P(reference is real | evidence) — 0.0–1.0
+  verdict: 'VERIFIED' | 'FAILED'; // posterior >= domain.bayesianThreshold
+  logOddsContributions: Record<string, number>; // per-layer Δ log-odds (for transparency)
+}
+```
+
+**Algorithm:**
+
+```
+prior_log_odds = ln(prior / (1 - prior))
+
+For each applicable layer with confidence c ∈ [0, 1]:
+  LR+ = sensitivity / (1 - specificity)   — how much a pass shifts toward "real"
+  LR- = (1 - sensitivity) / specificity   — how much a fail shifts toward "fake"
+  Δ   = c × ln(LR+) + (1-c) × ln(LR-)
+
+posterior = sigmoid(prior_log_odds + Σ Δ)
+```
+
+Absent layers default to `c = 0.5` (minimally informative). `logOddsContributions` exposes each layer's Δ for debugging and explainability.
+
+**Example:**
+```ts
+const { posterior, verdict, logOddsContributions } = computeBayesianScore('NEWS', [
+  { layerId: 'url', passed: false, confidence: 0 },  // 403 paywall
+  { layerId: 'ai',  passed: true,  confidence: 0.85 },
+]);
+// posterior ≈ 0.82, verdict: 'VERIFIED'
+// logOddsContributions: { url: -0.73, ai: +1.21 }
+```
+
+---
+
 ### `DOMAIN_CONFIGS`
 
 ```ts
@@ -206,13 +250,22 @@ Full domain configuration map. Each `DomainConfig` includes:
 ```ts
 interface DomainConfig {
   domain: ContentDomain;
-  label: string;           // 'Academic' | 'News' | 'Government' | 'General'
+  label: string;                 // 'Academic' | 'News' | 'Government' | 'General'
   description: string;
-  layers: LayerConfig[];   // applicable layers with weights
-  threshold: number;       // minimum score to VERIFY
-  aiInstruction: string;   // injected into AI evaluator prompt
-  urlPatterns?: RegExp[];  // URL patterns for classification
-  typePatterns?: string[]; // ReferenceType values for classification
+  layers: BayesianLayerConfig[]; // applicable layers with weights + Bayesian params
+  threshold: number;             // v1: minimum weighted score to VERIFY
+  prior: number;                 // v2: P(reference is real | domain)
+  bayesianThreshold: number;     // v2: minimum posterior probability to VERIFY
+  aiInstruction: string;         // injected into AI evaluator prompt
+  urlPatterns?: RegExp[];        // URL patterns for classification
+  typePatterns?: string[];       // ReferenceType values for classification
+}
+
+interface BayesianLayerConfig extends LayerConfig {
+  bayesian: {
+    sensitivity: number; // P(pass | real) — 0.0–1.0
+    specificity: number; // P(fail | fake) — 0.0–1.0
+  };
 }
 ```
 
@@ -242,10 +295,11 @@ interface LayerConfig {
 
 ```
 src/
-├── types.ts      — ContentDomain, LayerId, LayerResult, DomainConfig
-├── domains.ts    — DOMAIN_CONFIGS (the standard itself)
+├── types.ts      — ContentDomain, LayerId, LayerResult, DomainConfig, BayesianLayerConfig
+├── domains.ts    — DOMAIN_CONFIGS (the standard itself, including Bayesian params)
 ├── classify.ts   — classifyReference()
-├── score.ts      — computeDomainAwareScore()
+├── score.ts      — computeDomainAwareScore() [v1: weighted sum]
+├── bayesian.ts   — computeBayesianScore()    [v2: log-odds updating]
 └── index.ts      — public exports
 ```
 
