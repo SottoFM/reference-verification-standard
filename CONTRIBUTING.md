@@ -92,6 +92,12 @@ Proposed score (domain-aware NEWS):
 3. If it's a threshold change, show what currently passes/fails at the current and proposed threshold
 4. Submit a PR with the change + tests + CHANGELOG entry
 
+### Bayesian parameters
+
+**Bayesian parameters** — `sensitivity`, `specificity`, and `prior` values are currently
+expert-set heuristics (see `src/domains.ts`). A valuable contribution would be empirically
+calibrating these against a labeled dataset of real vs. hallucinated references.
+
 ---
 
 ## Adding a New Domain

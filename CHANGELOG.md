@@ -43,4 +43,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - GOVERNMENT: url(0.40) + ai(0.60) ≥ 0.55
   - GENERAL: url(0.30) + title_search(0.10) + ai(0.60) ≥ 0.55
 
+[0.2.0]: https://github.com/SottoFM/reference-verification-standard/releases/tag/v0.2.0
 [0.1.0]: https://github.com/SottoFM/reference-verification-standard/releases/tag/v0.1.0
