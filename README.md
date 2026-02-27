@@ -381,6 +381,64 @@ interface LayerConfig {
 ## Architecture
 
 ```
+                         ┌─────────────────────┐
+                         │   Reference Input    │
+                         │  { doi, url, type }  │
+                         └──────────┬──────────┘
+                                    │
+                         ┌──────────▼──────────┐
+                         │  classifyReference() │
+                         │                      │
+                         │  DOI? ──► ACADEMIC   │
+                         │  URL pattern match?  │
+                         │  Type fallback?      │
+                         │  else ──► GENERAL    │
+                         └──────────┬──────────┘
+                                    │
+                              ContentDomain
+                     (ACADEMIC│NEWS│GOVERNMENT│GENERAL)
+                                    │
+             ┌──────────────────────┼──────────────────────┐
+             │                      │                      │
+    ┌────────▼────────┐  ┌─────────▼─────────┐  ┌────────▼────────┐
+    │  Verification   │  │  Verification     │  │  Verification   │
+    │  Layer: URL     │  │  Layer: AI        │  │  Layer: DOI /   │
+    │  (HEAD check)   │  │  (LLM eval)      │  │  title_search   │
+    └────────┬────────┘  └─────────┬─────────┘  └────────┬────────┘
+             │                     │                      │
+             └──────────┬──────────┘──────────────────────┘
+                        │
+              LayerResult[] ─── { layerId, passed, confidence }
+                        │
+         ┌──────────────┴──────────────┐
+         │                             │
+  ┌──────▼──────┐          ┌───────────▼───────────┐
+  │  v1: Score  │          │  v2: Bayesian Score   │
+  │             │          │                       │
+  │  Σ wᵢ × cᵢ │          │  prior = P(real)      │
+  │             │          │                       │
+  │  score ≥ T? │          │  for each layer:      │
+  │  ─────────  │          │    LR⁺ = sens/(1-sp)  │
+  │  VERIFIED / │          │    LR⁻ = (1-sens)/sp  │
+  │  FAILED     │          │    Δ = c·ln(LR⁺)      │
+  │             │          │      + (1-c)·ln(LR⁻)  │
+  └──────┬──────┘          │                       │
+         │                 │  posterior = σ(Σ Δ)    │
+         │                 │  posterior ≥ T?        │
+         │                 │  ───────────           │
+         │                 │  VERIFIED / FAILED     │
+         │                 └───────────┬───────────┘
+         │                             │
+  ┌──────▼──────┐          ┌───────────▼───────────┐
+  │   Output    │          │      Output           │
+  │             │          │                       │
+  │  { score,   │          │  { posterior,          │
+  │    verdict } │          │    verdict,            │
+  │             │          │    logOddsContribs }   │
+  └─────────────┘          └───────────────────────┘
+```
+
+```
 src/
 ├── types.ts      — ContentDomain, LayerId, LayerResult, DomainConfig, BayesianLayerConfig
 ├── domains.ts    — DOMAIN_CONFIGS (the standard itself, including Bayesian params)
