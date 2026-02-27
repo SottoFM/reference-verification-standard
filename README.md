@@ -466,6 +466,112 @@ updating its submodule reference.
 
 ---
 
+## Political Spectrum & Source Bias
+
+### The Problem
+
+AI podcast scripts can inadvertently reflect a single political perspective when the source
+material fed into generation is ideologically one-sided. A script built entirely from sources
+rated "Left" by media-bias researchers will skew its framing, word choice, and which facts
+it emphasises — even if every cited reference passes verification.
+
+**Concrete example:** A podcast about immigration policy sourced exclusively from outlets
+rated Left-Center produces accurate but one-sided content. Every URL resolves (✅ VERIFIED),
+yet a listener expecting balanced treatment is misled. Reference verification alone cannot
+catch this — it is orthogonal to the question of ideological balance.
+
+### Approach
+
+Static media-bias lookup at **content-extraction time**, not at verification time.
+
+The lookup runs once per source URL when content is first extracted, before the script is
+generated. It annotates the extraction context with bias metadata. The script-generation
+prompt then receives conditional guidance — only when the topic is political — to seek
+balance or flag one-sidedness to the user.
+
+This keeps bias detection cleanly separated from reference verification: the verification
+standard scores whether a reference is real; bias metadata informs whether the generation
+prompt should seek additional perspective.
+
+### How It Works
+
+```
+Source URLs (from content extraction)
+         │
+         ▼
+  Domain extraction
+  (strip protocol, path, query)
+         │
+         ▼
+  MBFC dataset lookup  ──►  { bias, credibility, country }
+         │                  e.g. { bias: "left-center", credibility: "high" }
+         ▼
+  Political topic detection
+  (keyword match on topic + extracted content)
+         │
+  political?   non-political?
+     │               │
+     ▼               ▼
+  Inject bias     No bias
+  guidance into   guidance
+  script-gen      injected
+  prompt
+```
+
+Bias categories surfaced per source:
+
+| Value | Meaning |
+|-------|---------|
+| `left` | Far-left leaning |
+| `left-center` | Center-left leaning |
+| `center` | Least-biased / centrist |
+| `right-center` | Center-right leaning |
+| `right` | Far-right leaning |
+| `conspiracy-pseudoscience` | Promotes conspiracy theories or pseudoscience |
+| `satire` | Satire — content should not be treated as factual |
+| `fake-news` | Known misinformation outlet |
+
+When all detected sources share the same non-center rating and the topic is political, the
+script-generation prompt is augmented with guidance to note the ideological lean to the
+listener and, where possible, incorporate contrasting framing.
+
+### Data Source
+
+**Dataset:** [`drmikecrowe/mbfcext`](https://github.com/drmikecrowe/mbfcext) — a
+community-maintained mirror of [Media Bias / Fact Check (MBFC)](https://mediabiasfactcheck.com/)
+ratings, licensed MIT.
+
+- **Size:** 9,773 sources (as of dataset release)
+- **Update cadence:** Auto-updated daily from MBFC ratings via the upstream repository's CI
+- **Fields used:** `domain`, `bias`, `credibility`, `country`
+
+No network call is made at generation time. The dataset is bundled as a static JSON lookup.
+
+### What This Does NOT Do
+
+- **Does not reject sources.** A source rated `right` or `left` is not excluded from the
+  script. The verification standard continues to assess whether the reference is real.
+- **Does not editorialize.** The system does not label content "biased" to the end user
+  unprompted. Guidance is injected into the generation prompt, not the podcast transcript.
+- **Does not apply to non-political topics.** Technology tutorials, science explainers,
+  cooking guides — bias guidance is suppressed entirely when political topic detection
+  returns negative.
+
+### Limitations & Transparency
+
+| Limitation | Detail |
+|------------|--------|
+| One framework among several | MBFC is widely cited but not the only media bias rating system. [AllSides](https://www.allsides.com/) and [Ad Fontes Media](https://adfontesmedia.com/) use different methodologies and sometimes reach different conclusions for the same outlet. |
+| US-centric dataset | MBFC coverage is strongest for US English-language media. Non-US sources are rated but coverage is uneven; many regional outlets are absent from the dataset entirely. |
+| Source-level ≠ article-level | A center-rated outlet can publish a one-sided op-ed. A left-rated outlet can publish a balanced investigative piece. The lookup reflects outlet-level ratings, not individual article analysis. |
+| Static snapshot | The bundled dataset reflects ratings at a point in time. Outlets change ownership and editorial stance; the dataset may lag real-world shifts by weeks or months. |
+| No confidence score | MBFC ratings are categorical, not probabilistic. The dataset does not expose reviewer agreement or confidence — every rating is treated with equal weight regardless of how contested it may be. |
+
+Community contributions that extend coverage to non-US sources, integrate a second bias
+framework, or add article-level analysis are welcome — see [CONTRIBUTING.md](CONTRIBUTING.md).
+
+---
+
 ## Prior Art & Theoretical Basis
 
 The Bayesian log-odds algorithm is a well-established pattern in statistics and evidence-based
