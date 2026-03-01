@@ -58,6 +58,24 @@ describe('classifyReference', () => {
     });
   });
 
+  describe('EDUCATIONAL URL patterns', () => {
+    it('classifies khanacademy.org as EDUCATIONAL', () => {
+      expect(classifyReference({ url: 'https://www.khanacademy.org/math/algebra' })).toBe('EDUCATIONAL');
+    });
+
+    it('classifies openstax.org as EDUCATIONAL', () => {
+      expect(classifyReference({ url: 'https://openstax.org/books/college-algebra' })).toBe('EDUCATIONAL');
+    });
+
+    it('classifies coursera.org as EDUCATIONAL', () => {
+      expect(classifyReference({ url: 'https://www.coursera.org/learn/machine-learning' })).toBe('EDUCATIONAL');
+    });
+
+    it('classifies edx.org as EDUCATIONAL', () => {
+      expect(classifyReference({ url: 'https://www.edx.org/course/cs50' })).toBe('EDUCATIONAL');
+    });
+  });
+
   describe('type-based fallback', () => {
     it('classifies PAPER type as ACADEMIC when no URL match', () => {
       expect(classifyReference({ type: 'PAPER', url: 'https://example.com/paper' })).toBe('ACADEMIC');

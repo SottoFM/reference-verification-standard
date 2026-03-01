@@ -34,14 +34,15 @@ News podcasts silently end up with zero references.
 
 ## The Fix
 
-Domain-aware scoring. Each source is classified into one of four domains first, then scored
+Domain-aware scoring. Each source is classified into one of five domains first, then scored
 by the layers and weights appropriate for that domain.
 
 ```
-ACADEMIC  →  doi(0.45) + title_search(0.30) + url(0.10) + ai(0.15)  ≥ 0.70
-NEWS      →  url(0.35) + ai(0.65)                                    ≥ 0.50
-GOVERNMENT→  url(0.40) + ai(0.60)                                    ≥ 0.55
-GENERAL   →  url(0.30) + title_search(0.10) + ai(0.60)              ≥ 0.55
+ACADEMIC   →  doi(0.45) + title_search(0.30) + url(0.10) + ai(0.15)  ≥ 0.70
+NEWS       →  url(0.35) + ai(0.65)                                    ≥ 0.50
+GOVERNMENT →  url(0.40) + ai(0.60)                                    ≥ 0.55
+EDUCATIONAL→  url(0.30) + title_search(0.10) + ai(0.60)              ≥ 0.50
+GENERAL    →  url(0.30) + title_search(0.10) + ai(0.60)              ≥ 0.55
 ```
 
 **Concrete result:** A live NYT article:
@@ -359,7 +360,7 @@ interface BayesianLayerConfig extends LayerConfig {
 ### Types
 
 ```ts
-type ContentDomain = 'ACADEMIC' | 'NEWS' | 'GOVERNMENT' | 'GENERAL';
+type ContentDomain = 'ACADEMIC' | 'NEWS' | 'GOVERNMENT' | 'EDUCATIONAL' | 'GENERAL';
 
 type LayerId = 'doi' | 'title_search' | 'url' | 'ai';
 
@@ -396,7 +397,7 @@ interface LayerConfig {
                          └──────────┬──────────┘
                                     │
                               ContentDomain
-                     (ACADEMIC│NEWS│GOVERNMENT│GENERAL)
+                     (ACADEMIC│NEWS│GOVERNMENT│EDUCATIONAL│GENERAL)
                                     │
              ┌──────────────────────┼──────────────────────┐
              │                      │                      │

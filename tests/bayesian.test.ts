@@ -122,6 +122,26 @@ describe('computeBayesianScore', () => {
     });
   });
 
+  describe('EDUCATIONAL domain', () => {
+    it('verifies a Khan Academy article with URL + AI', () => {
+      const { posterior, verdict } = computeBayesianScore('EDUCATIONAL', [
+        { layerId: 'url', passed: true, confidence: 0.9 },
+        { layerId: 'ai', passed: true, confidence: 0.85 },
+      ]);
+      expect(posterior).toBeGreaterThan(DOMAIN_CONFIGS.EDUCATIONAL.bayesianThreshold);
+      expect(verdict).toBe('VERIFIED');
+    });
+
+    it('fails when URL is dead and AI is skeptical', () => {
+      const { posterior, verdict } = computeBayesianScore('EDUCATIONAL', [
+        { layerId: 'url', passed: false, confidence: 0 },
+        { layerId: 'ai', passed: false, confidence: 0.1 },
+      ]);
+      expect(posterior).toBeLessThan(DOMAIN_CONFIGS.EDUCATIONAL.bayesianThreshold);
+      expect(verdict).toBe('FAILED');
+    });
+  });
+
   describe('uninformative layers', () => {
     it('absent layers produce the same result as explicit c=0.5 inputs', () => {
       // Missing layers default to c=0.5 — identical to passing them explicitly.

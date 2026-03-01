@@ -1,4 +1,4 @@
-export type ContentDomain = 'ACADEMIC' | 'NEWS' | 'GOVERNMENT' | 'GENERAL';
+export type ContentDomain = 'ACADEMIC' | 'NEWS' | 'GOVERNMENT' | 'EDUCATIONAL' | 'GENERAL';
 
 // Must match the layer IDs used in the verification pipeline
 export type LayerId = 'doi' | 'title_search' | 'url' | 'ai';

@@ -1,7 +1,7 @@
 {
   "name": "@sottofm/verification-standard",
-  "version": "0.2.0",
-  "description": "Open, domain-aware reference verification standard for academic, news, government, and general sources",
+  "version": "0.3.0",
+  "description": "Open, domain-aware reference verification standard for academic, news, government, educational, and general sources",
   "keywords": [
     "reference-verification",
     "citation",

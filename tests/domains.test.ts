@@ -2,10 +2,11 @@ import { describe, it, expect } from 'vitest';
 import { DOMAIN_CONFIGS } from '../src/domains';
 
 describe('DOMAIN_CONFIGS', () => {
-  it('defines all four required domains', () => {
+  it('defines all five required domains', () => {
     expect(DOMAIN_CONFIGS).toHaveProperty('ACADEMIC');
     expect(DOMAIN_CONFIGS).toHaveProperty('NEWS');
     expect(DOMAIN_CONFIGS).toHaveProperty('GOVERNMENT');
+    expect(DOMAIN_CONFIGS).toHaveProperty('EDUCATIONAL');
     expect(DOMAIN_CONFIGS).toHaveProperty('GENERAL');
   });
 
@@ -125,6 +126,10 @@ describe('DOMAIN_CONFIGS', () => {
 
     it('GENERAL aiInstruction applies high scrutiny to anonymous sources', () => {
       expect(DOMAIN_CONFIGS.GENERAL.aiInstruction.toLowerCase()).toMatch(/scrutin|anonymous|rejection/i);
+    });
+
+    it('EDUCATIONAL aiInstruction mentions educational platforms', () => {
+      expect(DOMAIN_CONFIGS.EDUCATIONAL.aiInstruction.toLowerCase()).toMatch(/khan academy|openstax|coursera|mooc/i);
     });
   });
 });

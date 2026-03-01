@@ -14,14 +14,14 @@ export function classifyReference(ref: ClassifyInput): ContentDomain {
   const url = ref.url ?? '';
   const type = ref.type ?? '';
 
-  // 2. URL pattern matching (priority: ACADEMIC > NEWS > GOVERNMENT)
-  const urlCheckOrder: ContentDomain[] = ['ACADEMIC', 'NEWS', 'GOVERNMENT'];
+  // 2. URL pattern matching (priority: ACADEMIC > NEWS > GOVERNMENT > EDUCATIONAL)
+  const urlCheckOrder: ContentDomain[] = ['ACADEMIC', 'NEWS', 'GOVERNMENT', 'EDUCATIONAL'];
   for (const domain of urlCheckOrder) {
     if (DOMAIN_CONFIGS[domain].urlPatterns?.some((p) => p.test(url))) return domain;
   }
 
   // 3. ReferenceType fallback (PAPER/BOOK/REPORT → ACADEMIC first)
-  const typeCheckOrder: ContentDomain[] = ['ACADEMIC', 'NEWS', 'GOVERNMENT', 'GENERAL'];
+  const typeCheckOrder: ContentDomain[] = ['ACADEMIC', 'NEWS', 'GOVERNMENT', 'EDUCATIONAL', 'GENERAL'];
   for (const domain of typeCheckOrder) {
     if (DOMAIN_CONFIGS[domain].typePatterns?.includes(type)) return domain;
   }

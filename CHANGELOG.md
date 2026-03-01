@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2026-03-01
+
+### Added
+
+- `EDUCATIONAL` content domain for educational platforms, MOOCs, open textbooks, and curriculum bodies
+- Domain prior: EDUCATIONAL=0.65, threshold=0.50, bayesianThreshold=0.65
+- URL patterns: Khan Academy, OpenStax, Coursera, edX, Brilliant, CK-12, NCTM, and more
+- Classification priority: ACADEMIC > NEWS > GOVERNMENT > EDUCATIONAL > GENERAL
+
 ## [0.2.0] - 2026-02-25
 
 ### Added
@@ -43,5 +52,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - GOVERNMENT: url(0.40) + ai(0.60) ≥ 0.55
   - GENERAL: url(0.30) + title_search(0.10) + ai(0.60) ≥ 0.55
 
+[0.3.0]: https://github.com/SottoFM/reference-verification-standard/releases/tag/v0.3.0
 [0.2.0]: https://github.com/SottoFM/reference-verification-standard/releases/tag/v0.2.0
 [0.1.0]: https://github.com/SottoFM/reference-verification-standard/releases/tag/v0.1.0

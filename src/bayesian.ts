@@ -29,7 +29,7 @@ function sigmoid(x: number): number {
  * discriminative power). For calibrated layers, c = 0.5 still contributes a small
  * net shift — absent evidence is not the same as no evidence.
  *
- * @param domain       - The content domain (ACADEMIC | NEWS | GOVERNMENT | GENERAL)
+ * @param domain       - The content domain (ACADEMIC | NEWS | GOVERNMENT | EDUCATIONAL | GENERAL)
  * @param layerResults - Results from each verification layer
  * @returns posterior probability, the verdict, and a per-layer breakdown
  */

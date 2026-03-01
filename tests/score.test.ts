@@ -137,7 +137,7 @@ describe('computeDomainAwareScore', () => {
     });
 
     it('score never exceeds sum of all weights (≤ 1.0)', () => {
-      for (const domain of ['ACADEMIC', 'NEWS', 'GOVERNMENT', 'GENERAL'] as const) {
+      for (const domain of ['ACADEMIC', 'NEWS', 'GOVERNMENT', 'EDUCATIONAL', 'GENERAL'] as const) {
         const { score } = computeDomainAwareScore(domain, [
           { layerId: 'doi', passed: true, confidence: 1.0 },
           { layerId: 'title_search', passed: true, confidence: 1.0 },
