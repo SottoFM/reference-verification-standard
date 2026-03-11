@@ -105,6 +105,57 @@ describe('classifyReference', () => {
     });
   });
 
+  describe('malformed and adversarial inputs', () => {
+    it('handles empty string URL', () => {
+      expect(classifyReference({ url: '' })).toBe('GENERAL');
+    });
+
+    it('handles URL with no hostname (relative path)', () => {
+      expect(classifyReference({ url: '/just/a/path' })).toBe('GENERAL');
+    });
+
+    it('does not crash on extremely long URLs', () => {
+      const longUrl = 'https://example.com/' + 'a'.repeat(10000);
+      expect(classifyReference({ url: longUrl })).toBe('GENERAL');
+    });
+
+    it('handles undefined values gracefully', () => {
+      expect(classifyReference({ doi: undefined, url: undefined, type: undefined })).toBe('GENERAL');
+    });
+
+    it('handles empty string DOI (falsy — falls through to URL)', () => {
+      expect(classifyReference({ doi: '', url: 'https://reuters.com/article' })).toBe('NEWS');
+    });
+
+    it('handles whitespace-only DOI (truthy — treated as ACADEMIC)', () => {
+      expect(classifyReference({ doi: '  ' })).toBe('ACADEMIC');
+    });
+  });
+
+  describe('case sensitivity', () => {
+    it('uppercase URLs do not match lowercase regex patterns', () => {
+      // Regex patterns are lowercase — uppercase won't match \b boundaries
+      expect(classifyReference({ url: 'https://ARXIV.ORG/abs/123' })).toBe('GENERAL');
+    });
+
+    it('DOI matching is case-insensitive (any truthy string)', () => {
+      expect(classifyReference({ doi: '10.1234/TEST' })).toBe('ACADEMIC');
+    });
+  });
+
+  describe('.gov regex does not over-match', () => {
+    it('matches .gov.uk (country TLD)', () => {
+      expect(classifyReference({ url: 'https://www.gov.uk/guidance/tax' })).toBe('GOVERNMENT');
+    });
+
+    it('does not match govtrack.us (gov in subdomain, not TLD)', () => {
+      // govtrack.us doesn't contain .gov\b — the \b is after "gov" in the domain
+      const result = classifyReference({ url: 'https://www.govtrack.us/congress' });
+      // govtrack.us doesn't match \.gov\b — no false positive
+      expect(result).not.toBe('GOVERNMENT');
+    });
+  });
+
   describe('priority ordering (ACADEMIC > NEWS > GOVERNMENT)', () => {
     it('prefers ACADEMIC URL pattern over NEWS type hint', () => {
       expect(classifyReference({ url: 'https://arxiv.org/abs/123', type: 'ARTICLE' })).toBe('ACADEMIC');
