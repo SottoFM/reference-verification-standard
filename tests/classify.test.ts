@@ -127,15 +127,22 @@ describe('classifyReference', () => {
       expect(classifyReference({ doi: '', url: 'https://reuters.com/article' })).toBe('NEWS');
     });
 
-    it('handles whitespace-only DOI (truthy — treated as ACADEMIC)', () => {
-      expect(classifyReference({ doi: '  ' })).toBe('ACADEMIC');
+    it('handles whitespace-only DOI (trimmed — falls through to URL)', () => {
+      expect(classifyReference({ doi: '  ', url: 'https://reuters.com/article' })).toBe('NEWS');
+    });
+
+    it('handles whitespace-only DOI with no URL (falls to GENERAL)', () => {
+      expect(classifyReference({ doi: '  ' })).toBe('GENERAL');
     });
   });
 
   describe('case sensitivity', () => {
-    it('uppercase URLs do not match lowercase regex patterns', () => {
-      // Regex patterns are lowercase — uppercase won't match \b boundaries
-      expect(classifyReference({ url: 'https://ARXIV.ORG/abs/123' })).toBe('GENERAL');
+    it('uppercase URLs match after lowercase normalization', () => {
+      expect(classifyReference({ url: 'https://ARXIV.ORG/abs/123' })).toBe('ACADEMIC');
+    });
+
+    it('mixed-case URLs match correctly', () => {
+      expect(classifyReference({ url: 'https://www.Reuters.COM/world/news' })).toBe('NEWS');
     });
 
     it('DOI matching is case-insensitive (any truthy string)', () => {

@@ -8,10 +8,10 @@ interface ClassifyInput {
 }
 
 export function classifyReference(ref: ClassifyInput): ContentDomain {
-  // 1. DOI present → always ACADEMIC
-  if (ref.doi) return 'ACADEMIC';
+  // 1. DOI present → always ACADEMIC (trim to reject whitespace-only)
+  if (ref.doi?.trim()) return 'ACADEMIC';
 
-  const url = ref.url ?? '';
+  const url = (ref.url ?? '').toLowerCase();
   const type = ref.type ?? '';
 
   // 2. URL pattern matching (priority: ACADEMIC > NEWS > GOVERNMENT > EDUCATIONAL)
