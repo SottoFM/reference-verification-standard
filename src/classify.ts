@@ -8,20 +8,20 @@ interface ClassifyInput {
 }
 
 export function classifyReference(ref: ClassifyInput): ContentDomain {
-  // 1. DOI present → always ACADEMIC
-  if (ref.doi) return 'ACADEMIC';
+  // 1. DOI present → always ACADEMIC (trim to reject whitespace-only)
+  if (ref.doi?.trim()) return 'ACADEMIC';
 
-  const url = ref.url ?? '';
+  const url = (ref.url ?? '').toLowerCase();
   const type = ref.type ?? '';
 
-  // 2. URL pattern matching (priority: ACADEMIC > NEWS > GOVERNMENT)
-  const urlCheckOrder: ContentDomain[] = ['ACADEMIC', 'NEWS', 'GOVERNMENT'];
+  // 2. URL pattern matching (priority: ACADEMIC > NEWS > GOVERNMENT > EDUCATIONAL)
+  const urlCheckOrder: ContentDomain[] = ['ACADEMIC', 'NEWS', 'GOVERNMENT', 'EDUCATIONAL'];
   for (const domain of urlCheckOrder) {
     if (DOMAIN_CONFIGS[domain].urlPatterns?.some((p) => p.test(url))) return domain;
   }
 
   // 3. ReferenceType fallback (PAPER/BOOK/REPORT → ACADEMIC first)
-  const typeCheckOrder: ContentDomain[] = ['ACADEMIC', 'NEWS', 'GOVERNMENT', 'GENERAL'];
+  const typeCheckOrder: ContentDomain[] = ['ACADEMIC', 'NEWS', 'GOVERNMENT', 'EDUCATIONAL', 'GENERAL'];
   for (const domain of typeCheckOrder) {
     if (DOMAIN_CONFIGS[domain].typePatterns?.includes(type)) return domain;
   }

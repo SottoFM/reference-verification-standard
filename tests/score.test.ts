@@ -129,6 +129,65 @@ describe('computeDomainAwareScore', () => {
     });
   });
 
+  describe('EDUCATIONAL domain', () => {
+    it('verifies a Coursera course with URL + AI', () => {
+      const { score, verdict } = computeDomainAwareScore('EDUCATIONAL', [
+        { layerId: 'url', passed: true, confidence: 0.9 },
+        { layerId: 'ai', passed: true, confidence: 0.85 },
+      ]);
+      // 0.30*0.9 + 0.60*0.85 = 0.27 + 0.51 = 0.78
+      expect(score).toBeCloseTo(0.78, 2);
+      expect(verdict).toBe('VERIFIED');
+    });
+
+    it('fails when URL dead and AI skeptical', () => {
+      const { score, verdict } = computeDomainAwareScore('EDUCATIONAL', [
+        { layerId: 'url', passed: false, confidence: 0 },
+        { layerId: 'ai', passed: false, confidence: 0.1 },
+      ]);
+      // 0.30*0 + 0.60*0.1 = 0.06
+      expect(score).toBeCloseTo(0.06, 2);
+      expect(verdict).toBe('FAILED');
+    });
+  });
+
+  describe('monotonicity — higher confidence always means higher score', () => {
+    for (const domain of ['ACADEMIC', 'NEWS', 'GOVERNMENT', 'EDUCATIONAL', 'GENERAL'] as const) {
+      it(`${domain}: raising all confidences raises the score`, () => {
+        const low = computeDomainAwareScore(domain, [
+          { layerId: 'url', passed: true, confidence: 0.2 },
+          { layerId: 'ai', passed: true, confidence: 0.2 },
+        ]);
+        const high = computeDomainAwareScore(domain, [
+          { layerId: 'url', passed: true, confidence: 0.9 },
+          { layerId: 'ai', passed: true, confidence: 0.9 },
+        ]);
+        expect(high.score).toBeGreaterThan(low.score);
+      });
+    }
+  });
+
+  describe('boundary — verdict flips at threshold', () => {
+    it('NEWS: score exactly at 0.50 threshold is VERIFIED', () => {
+      // 0.35*0 + 0.65*ai_c = 0.50 → ai_c = 0.50/0.65
+      const { score, verdict } = computeDomainAwareScore('NEWS', [
+        { layerId: 'url', passed: false, confidence: 0 },
+        { layerId: 'ai', passed: true, confidence: 0.50 / 0.65 },
+      ]);
+      expect(score).toBeCloseTo(0.50, 5);
+      expect(verdict).toBe('VERIFIED');
+    });
+
+    it('NEWS: score just below threshold is FAILED', () => {
+      const { score, verdict } = computeDomainAwareScore('NEWS', [
+        { layerId: 'url', passed: false, confidence: 0 },
+        { layerId: 'ai', passed: true, confidence: (0.50 / 0.65) - 0.001 },
+      ]);
+      expect(score).toBeLessThan(0.50);
+      expect(verdict).toBe('FAILED');
+    });
+  });
+
   describe('edge cases', () => {
     it('returns score 0 and FAILED for empty layer results', () => {
       const { score, verdict } = computeDomainAwareScore('NEWS', []);
@@ -137,7 +196,7 @@ describe('computeDomainAwareScore', () => {
     });
 
     it('score never exceeds sum of all weights (≤ 1.0)', () => {
-      for (const domain of ['ACADEMIC', 'NEWS', 'GOVERNMENT', 'GENERAL'] as const) {
+      for (const domain of ['ACADEMIC', 'NEWS', 'GOVERNMENT', 'EDUCATIONAL', 'GENERAL'] as const) {
         const { score } = computeDomainAwareScore(domain, [
           { layerId: 'doi', passed: true, confidence: 1.0 },
           { layerId: 'title_search', passed: true, confidence: 1.0 },

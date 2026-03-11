@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { computeBayesianScore } from '../src/bayesian';
 import { DOMAIN_CONFIGS } from '../src/domains';
+import type { ContentDomain, LayerId } from '../src/types';
 
 describe('computeBayesianScore', () => {
   describe('return shape', () => {
@@ -122,6 +123,26 @@ describe('computeBayesianScore', () => {
     });
   });
 
+  describe('EDUCATIONAL domain', () => {
+    it('verifies a Khan Academy article with URL + AI', () => {
+      const { posterior, verdict } = computeBayesianScore('EDUCATIONAL', [
+        { layerId: 'url', passed: true, confidence: 0.9 },
+        { layerId: 'ai', passed: true, confidence: 0.85 },
+      ]);
+      expect(posterior).toBeGreaterThan(DOMAIN_CONFIGS.EDUCATIONAL.bayesianThreshold);
+      expect(verdict).toBe('VERIFIED');
+    });
+
+    it('fails when URL is dead and AI is skeptical', () => {
+      const { posterior, verdict } = computeBayesianScore('EDUCATIONAL', [
+        { layerId: 'url', passed: false, confidence: 0 },
+        { layerId: 'ai', passed: false, confidence: 0.1 },
+      ]);
+      expect(posterior).toBeLessThan(DOMAIN_CONFIGS.EDUCATIONAL.bayesianThreshold);
+      expect(verdict).toBe('FAILED');
+    });
+  });
+
   describe('uninformative layers', () => {
     it('absent layers produce the same result as explicit c=0.5 inputs', () => {
       // Missing layers default to c=0.5 — identical to passing them explicitly.
@@ -151,6 +172,132 @@ describe('computeBayesianScore', () => {
         { layerId: 'ai', passed: false, confidence: 0 },
       ]);
       expect(posterior).toBeLessThan(baseline.posterior);
+    });
+  });
+
+  describe('boundary conditions', () => {
+    it('VERIFIED verdict always has posterior >= bayesianThreshold', () => {
+      for (const [domain, config] of Object.entries(DOMAIN_CONFIGS)) {
+        const { posterior, verdict } = computeBayesianScore(domain as ContentDomain, [
+          { layerId: 'doi', passed: true, confidence: 0.9 },
+          { layerId: 'title_search', passed: true, confidence: 0.9 },
+          { layerId: 'url', passed: true, confidence: 0.9 },
+          { layerId: 'ai', passed: true, confidence: 0.9 },
+        ]);
+        if (verdict === 'VERIFIED') {
+          expect(posterior).toBeGreaterThanOrEqual(config.bayesianThreshold);
+        }
+      }
+    });
+
+    it('FAILED verdict always has posterior < bayesianThreshold', () => {
+      for (const [domain, config] of Object.entries(DOMAIN_CONFIGS)) {
+        const { posterior, verdict } = computeBayesianScore(domain as ContentDomain, [
+          { layerId: 'doi', passed: false, confidence: 0 },
+          { layerId: 'title_search', passed: false, confidence: 0 },
+          { layerId: 'url', passed: false, confidence: 0 },
+          { layerId: 'ai', passed: false, confidence: 0 },
+        ]);
+        if (verdict === 'FAILED') {
+          expect(posterior).toBeLessThan(config.bayesianThreshold);
+        }
+      }
+    });
+  });
+
+  describe('adversarial confidence values', () => {
+    it('confidence = 0 produces finite posterior', () => {
+      const { posterior } = computeBayesianScore('NEWS', [
+        { layerId: 'ai', passed: false, confidence: 0 },
+      ]);
+      expect(Number.isFinite(posterior)).toBe(true);
+      expect(posterior).toBeGreaterThan(0);
+      expect(posterior).toBeLessThan(1);
+    });
+
+    it('confidence = 1 produces finite posterior', () => {
+      const { posterior } = computeBayesianScore('NEWS', [
+        { layerId: 'ai', passed: true, confidence: 1 },
+      ]);
+      expect(Number.isFinite(posterior)).toBe(true);
+      expect(posterior).toBeGreaterThan(0);
+      expect(posterior).toBeLessThan(1);
+    });
+
+    it('all layers at confidence = 0 produces finite posterior', () => {
+      const { posterior } = computeBayesianScore('ACADEMIC', [
+        { layerId: 'doi', passed: false, confidence: 0 },
+        { layerId: 'title_search', passed: false, confidence: 0 },
+        { layerId: 'url', passed: false, confidence: 0 },
+        { layerId: 'ai', passed: false, confidence: 0 },
+      ]);
+      expect(Number.isFinite(posterior)).toBe(true);
+      expect(posterior).toBeGreaterThan(0);
+    });
+
+    it('all layers at confidence = 1 produces finite posterior', () => {
+      const { posterior } = computeBayesianScore('ACADEMIC', [
+        { layerId: 'doi', passed: true, confidence: 1 },
+        { layerId: 'title_search', passed: true, confidence: 1 },
+        { layerId: 'url', passed: true, confidence: 1 },
+        { layerId: 'ai', passed: true, confidence: 1 },
+      ]);
+      expect(Number.isFinite(posterior)).toBe(true);
+      expect(posterior).toBeLessThan(1);
+    });
+  });
+
+  describe('extra layer IDs are silently ignored', () => {
+    it('layer results for IDs not in domain config do not affect posterior', () => {
+      const baseline = computeBayesianScore('NEWS', [
+        { layerId: 'url', passed: true, confidence: 0.8 },
+        { layerId: 'ai', passed: true, confidence: 0.9 },
+      ]);
+      const withExtra = computeBayesianScore('NEWS', [
+        { layerId: 'url', passed: true, confidence: 0.8 },
+        { layerId: 'ai', passed: true, confidence: 0.9 },
+        { layerId: 'doi' as LayerId, passed: true, confidence: 1.0 },
+      ]);
+      // NEWS config has no doi layer — extra result ignored
+      expect(withExtra.posterior).toBeCloseTo(baseline.posterior, 10);
+    });
+  });
+
+  describe('monotonicity', () => {
+    for (const domain of ['ACADEMIC', 'NEWS', 'GOVERNMENT', 'EDUCATIONAL', 'GENERAL'] as const) {
+      it(`${domain}: higher confidence always raises posterior`, () => {
+        const low = computeBayesianScore(domain, [
+          { layerId: 'url', passed: true, confidence: 0.3 },
+          { layerId: 'ai', passed: true, confidence: 0.3 },
+        ]);
+        const high = computeBayesianScore(domain, [
+          { layerId: 'url', passed: true, confidence: 0.9 },
+          { layerId: 'ai', passed: true, confidence: 0.9 },
+        ]);
+        expect(high.posterior).toBeGreaterThan(low.posterior);
+      });
+    }
+
+    it('adding a strong positive layer raises posterior', () => {
+      const without = computeBayesianScore('ACADEMIC', [
+        { layerId: 'url', passed: true, confidence: 0.5 },
+      ]);
+      const withDoi = computeBayesianScore('ACADEMIC', [
+        { layerId: 'url', passed: true, confidence: 0.5 },
+        { layerId: 'doi', passed: true, confidence: 0.95 },
+      ]);
+      expect(withDoi.posterior).toBeGreaterThan(without.posterior);
+    });
+
+    it('adding a strong negative layer lowers posterior', () => {
+      const without = computeBayesianScore('ACADEMIC', [
+        { layerId: 'url', passed: true, confidence: 0.8 },
+      ]);
+      const withFailedDoi = computeBayesianScore('ACADEMIC', [
+        { layerId: 'url', passed: true, confidence: 0.8 },
+        { layerId: 'doi', passed: false, confidence: 0 },
+      ]);
+      expect(withFailedDoi.posterior).toBeLessThan(without.posterior);
     });
   });
 

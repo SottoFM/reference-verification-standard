@@ -58,6 +58,24 @@ describe('classifyReference', () => {
     });
   });
 
+  describe('EDUCATIONAL URL patterns', () => {
+    it('classifies khanacademy.org as EDUCATIONAL', () => {
+      expect(classifyReference({ url: 'https://www.khanacademy.org/math/algebra' })).toBe('EDUCATIONAL');
+    });
+
+    it('classifies openstax.org as EDUCATIONAL', () => {
+      expect(classifyReference({ url: 'https://openstax.org/books/college-algebra' })).toBe('EDUCATIONAL');
+    });
+
+    it('classifies coursera.org as EDUCATIONAL', () => {
+      expect(classifyReference({ url: 'https://www.coursera.org/learn/machine-learning' })).toBe('EDUCATIONAL');
+    });
+
+    it('classifies edx.org as EDUCATIONAL', () => {
+      expect(classifyReference({ url: 'https://www.edx.org/course/cs50' })).toBe('EDUCATIONAL');
+    });
+  });
+
   describe('type-based fallback', () => {
     it('classifies PAPER type as ACADEMIC when no URL match', () => {
       expect(classifyReference({ type: 'PAPER', url: 'https://example.com/paper' })).toBe('ACADEMIC');
@@ -84,6 +102,64 @@ describe('classifyReference', () => {
 
     it('classifies null values as GENERAL', () => {
       expect(classifyReference({ doi: null, url: null, type: null })).toBe('GENERAL');
+    });
+  });
+
+  describe('malformed and adversarial inputs', () => {
+    it('handles empty string URL', () => {
+      expect(classifyReference({ url: '' })).toBe('GENERAL');
+    });
+
+    it('handles URL with no hostname (relative path)', () => {
+      expect(classifyReference({ url: '/just/a/path' })).toBe('GENERAL');
+    });
+
+    it('does not crash on extremely long URLs', () => {
+      const longUrl = 'https://example.com/' + 'a'.repeat(10000);
+      expect(classifyReference({ url: longUrl })).toBe('GENERAL');
+    });
+
+    it('handles undefined values gracefully', () => {
+      expect(classifyReference({ doi: undefined, url: undefined, type: undefined })).toBe('GENERAL');
+    });
+
+    it('handles empty string DOI (falsy — falls through to URL)', () => {
+      expect(classifyReference({ doi: '', url: 'https://reuters.com/article' })).toBe('NEWS');
+    });
+
+    it('handles whitespace-only DOI (trimmed — falls through to URL)', () => {
+      expect(classifyReference({ doi: '  ', url: 'https://reuters.com/article' })).toBe('NEWS');
+    });
+
+    it('handles whitespace-only DOI with no URL (falls to GENERAL)', () => {
+      expect(classifyReference({ doi: '  ' })).toBe('GENERAL');
+    });
+  });
+
+  describe('case sensitivity', () => {
+    it('uppercase URLs match after lowercase normalization', () => {
+      expect(classifyReference({ url: 'https://ARXIV.ORG/abs/123' })).toBe('ACADEMIC');
+    });
+
+    it('mixed-case URLs match correctly', () => {
+      expect(classifyReference({ url: 'https://www.Reuters.COM/world/news' })).toBe('NEWS');
+    });
+
+    it('DOI matching is case-insensitive (any truthy string)', () => {
+      expect(classifyReference({ doi: '10.1234/TEST' })).toBe('ACADEMIC');
+    });
+  });
+
+  describe('.gov regex does not over-match', () => {
+    it('matches .gov.uk (country TLD)', () => {
+      expect(classifyReference({ url: 'https://www.gov.uk/guidance/tax' })).toBe('GOVERNMENT');
+    });
+
+    it('does not match govtrack.us (gov in subdomain, not TLD)', () => {
+      // govtrack.us doesn't contain .gov\b — the \b is after "gov" in the domain
+      const result = classifyReference({ url: 'https://www.govtrack.us/congress' });
+      // govtrack.us doesn't match \.gov\b — no false positive
+      expect(result).not.toBe('GOVERNMENT');
     });
   });
 
