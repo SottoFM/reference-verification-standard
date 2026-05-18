@@ -22,7 +22,7 @@
     "url": "https://github.com/SottoFM/reference-verification-standard.git"
   },
   "license": "MIT",
-  "author": "SottoFM <hello@sotto.fm>",
+  "author": "Sotto <hello@example.com>",
   "main": "./src/index.ts",
   "types": "./src/index.ts",
   "publishConfig": {

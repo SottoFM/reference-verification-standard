@@ -219,4 +219,4 @@ These guide every decision in the standard:
 
 Open an issue or start a discussion. We're happy to help guide contributions.
 
-Built with care by [Sotto](https://sotto.fm) — the open podcast network.
+Built by the Sotto project for private podcast infrastructure.

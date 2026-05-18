@@ -455,7 +455,7 @@ The standard has zero runtime dependencies. Pure TypeScript — works in any JS 
 
 ## Used by Sotto
 
-This package is the scoring engine behind [Sotto](https://sotto.fm) — the open podcast network
+This package is the scoring engine behind Sotto, open-source private podcast infrastructure
 where AI generates multi-voice podcasts from any topic.
 
 Every reference cited in a Sotto podcast is verified using this standard. The domain badge
@@ -624,4 +624,4 @@ Key things you can improve:
 
 ## License
 
-[MIT](LICENSE) — Copyright © 2024 [SottoFM](https://sotto.fm)
+[MIT](LICENSE) - Copyright © 2024 Sotto
