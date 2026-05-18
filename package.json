@@ -1,5 +1,5 @@
 {
-  "name": "@sottofm/verification-standard",
+  "name": "@sotto/verification-standard",
   "version": "0.3.0",
   "description": "Open, domain-aware reference verification standard for academic, news, government, educational, and general sources",
   "keywords": [
@@ -13,13 +13,13 @@
     "podcast",
     "open-standard"
   ],
-  "homepage": "https://github.com/SottoFM/reference-verification-standard#readme",
+  "homepage": "https://github.com/your-org/reference-verification-standard#readme",
   "bugs": {
-    "url": "https://github.com/SottoFM/reference-verification-standard/issues"
+    "url": "https://github.com/your-org/reference-verification-standard/issues"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/SottoFM/reference-verification-standard.git"
+    "url": "https://github.com/your-org/reference-verification-standard.git"
   },
   "license": "MIT",
   "author": "Sotto <hello@example.com>",

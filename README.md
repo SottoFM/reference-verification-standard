@@ -1,11 +1,11 @@
 <div align="center">
 
-# @sottofm/verification-standard
+# @sotto/verification-standard
 
 **The open, domain-aware reference verification standard.**
 
-[![CI](https://github.com/SottoFM/reference-verification-standard/actions/workflows/ci.yml/badge.svg)](https://github.com/SottoFM/reference-verification-standard/actions/workflows/ci.yml)
-[![npm](https://img.shields.io/npm/v/@sottofm/verification-standard?color=D97706)](https://www.npmjs.com/package/@sottofm/verification-standard)
+[![CI](https://github.com/your-org/reference-verification-standard/actions/workflows/ci.yml/badge.svg)](https://github.com/your-org/reference-verification-standard/actions/workflows/ci.yml)
+[![npm](https://img.shields.io/npm/v/@sotto/verification-standard?color=D97706)](https://www.npmjs.com/package/@sotto/verification-standard)
 [![License: MIT](https://img.shields.io/badge/License-MIT-1E3A5F.svg)](LICENSE)
 [![TypeScript](https://img.shields.io/badge/TypeScript-strict-1E3A5F)](https://www.typescriptlang.org/)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-16A34A.svg)](CONTRIBUTING.md)
@@ -56,7 +56,7 @@ GENERAL    →  url(0.30) + title_search(0.10) + ai(0.60)              ≥ 0.55
 ## Quick Start
 
 ```bash
-npm install @sottofm/verification-standard
+npm install @sotto/verification-standard
 ```
 
 ```ts
@@ -64,7 +64,7 @@ import {
   classifyReference,
   computeDomainAwareScore,
   DOMAIN_CONFIGS,
-} from '@sottofm/verification-standard';
+} from '@sotto/verification-standard';
 
 // Step 1: classify the reference
 const domain = classifyReference({

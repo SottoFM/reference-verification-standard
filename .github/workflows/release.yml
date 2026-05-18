@@ -38,7 +38,7 @@ jobs:
       - name: Publish to npm
         # Uses npm Trusted Publishing (OIDC) — no NPM_TOKEN secret required.
         # Configure at: npmjs.com → package settings → Trusted Publishers
-        # Add GitHub publisher: owner=SottoFM repo=reference-verification-standard workflow=release.yml
+        # Add GitHub publisher: owner=your-org repo=reference-verification-standard workflow=release.yml
         run: npm publish --access public --provenance
 
       - name: Create GitHub Release

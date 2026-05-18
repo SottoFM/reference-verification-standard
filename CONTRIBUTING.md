@@ -35,7 +35,7 @@ add new domains, fix misclassifications, and catch cases we haven't thought of.
 ## Development Setup
 
 ```bash
-git clone https://github.com/SottoFM/reference-verification-standard.git
+git clone https://github.com/your-org/reference-verification-standard.git
 cd reference-verification-standard
 npm install
 
